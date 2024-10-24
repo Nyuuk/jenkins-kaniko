@@ -1,4 +1,5 @@
 # Menggunakan base image yang ringan dan mendukung JDK 17
+FROM gcr.io/kaniko-project/executor AS kaniko
 FROM openjdk:17-slim
 
 # Install tools dasar dan Kaniko
@@ -12,8 +13,14 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Kaniko (kaniko executor)
-ENV KANIKO_VERSION=v1.13.0
-ADD https://github.com/GoogleContainerTools/kaniko/releases/download/${KANIKO_VERSION}/executor /kaniko/executor
+COPY --from=kaniko /kaniko/executor /kaniko/executor
+COPY --from=kaniko /kaniko/docker-credential-gcr /kaniko/docker-credential-gcr
+COPY --from=kaniko /kaniko/docker-credential-ecr-login /kaniko/docker-credential-ecr-login
+COPY --from=kaniko /kaniko/docker-credential-acr-env /kaniko/docker-credential-acr-env
+COPY --from=kaniko /etc/nsswitch.conf /etc/nsswitch.conf
+COPY --from=kaniko /kaniko/.docker /kaniko/.docker
+# ENV KANIKO_VERSION=v1.13.0
+# ADD https://github.com/GoogleContainerTools/kaniko/releases/download/${KANIKO_VERSION}/executor /kaniko/executor
 RUN chmod +x /kaniko/executor
 
 # Set environment variable untuk Kaniko (agar tidak meminta akses root)
