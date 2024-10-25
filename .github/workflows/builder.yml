@@ -52,6 +52,9 @@ jobs:
         run: |
           set -e
           docker push ${{ secrets.DOCKER_USERNAME }}/jenkins-kaniko:${{ github.run_number }}
+
+          docker tag ${{ secrets.DOCKER_USERNAME }}/jenkins-kaniko:${{ github.run_number }} ${{ secrets.DOCKER_USERNAME }}/jenkins-kaniko:latest
+          docker push ${{ secrets.DOCKER_USERNAME }}/jenkins-kaniko:latest
           
       - name: Send Notification (Pipeline Result)
         if: always()  # Pastikan notifikasi ini selalu dikirim
