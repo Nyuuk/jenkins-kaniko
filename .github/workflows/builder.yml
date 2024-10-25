@@ -54,6 +54,7 @@ jobs:
           docker push ${{ secrets.DOCKER_USERNAME }}/jenkins-kaniko:${{ github.run_number }}
           
       - name: Send Notification (Pipeline Result)
+        if: always()  # Pastikan notifikasi ini selalu dikirim
         env:
           API_URL: ${{ secrets.API_URL }}
           API_SECRET: ${{ secrets.API_SECRET }}
