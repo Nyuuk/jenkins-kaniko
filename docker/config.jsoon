@@ -1,0 +1,13 @@
+{
+        "auths": {
+                "reg.icc.id": {
+                        "auth": "ZGF1OkRBVUAyMDI0"
+                },
+                "reg.icc.local": {
+                        "auth": "ZGF1OkRBVUAyMDI0"
+                },
+                "reg.icc.private": {
+                        "auth": "ZGF1OkRBVUAyMDI0"
+                }
+        }
+}j

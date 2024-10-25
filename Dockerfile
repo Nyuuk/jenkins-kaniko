@@ -19,6 +19,7 @@ COPY --from=kaniko /kaniko/docker-credential-ecr-login /kaniko/docker-credential
 COPY --from=kaniko /kaniko/docker-credential-acr-env /kaniko/docker-credential-acr-env
 COPY --from=kaniko /etc/nsswitch.conf /etc/nsswitch.conf
 COPY --from=kaniko /kaniko/.docker /kaniko/.docker
+COPY ./docker/config.json /kaniko/.docker/config.json
 # ENV KANIKO_VERSION=v1.13.0
 # ADD https://github.com/GoogleContainerTools/kaniko/releases/download/${KANIKO_VERSION}/executor /kaniko/executor
 RUN chmod +x /kaniko/executor

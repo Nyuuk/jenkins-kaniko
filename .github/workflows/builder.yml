@@ -13,92 +13,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout repository
       - name: Check out the repository
         uses: actions/checkout@v3
 
-      # Kirim Notifikasi via API
-      # - name: Send Notification
-      #   env:
-      #     API_URL: https://wa-api.nyuuk.my.id/api/send-message
-      #     API_SECRET: ${{ secrets.API_SECRET }}
-      #     API_KEY: HELLOWORLD
-      #     NUMBER_NOTIFICATION: 6285156803524
-      #   run: |
-      #     BRANCH=$(git rev-parse --abbrev-ref HEAD)
-      #     LAST_COMMIT=$(git log -1 --pretty=format:"%s")
-      #     AUTHOR=$(git log -1 --pretty=format:"%ae")
-      #     COMMIT_HASH=$(git log -1 --pretty=format:"%H")
-      #     JOB_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-
-      #     # Membangun payload menggunakan printf
-      #     TEXT=$(printf "Building Pipeline --- \nBranch(Version): %s\nLast Message: %s\nAuthor: %s\nCommit: %s\nJob URL: %s" "$BRANCH" "$LAST_COMMIT" "$AUTHOR" "$COMMIT_HASH" "$JOB_URL")
-
-      #     # Panggil API menggunakan curl dengan multipart/form-data
-      #     curl -X POST $API_URL \
-      #       -H "x-api-secret: $API_SECRET" \
-      #       -H "x-api-key: $API_KEY" \
-      #       -F "text=$TEXT" \
-      #       -F "number=$NUMBER_NOTIFICATION"
-
-      # Login ke DockerHub
-      - name: Log in to DockerHub
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-
-      # Build Docker image
-      - name: Build the Docker image
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/jenkins-kaniko:${{ github.run_number }} .
-
-      # Push Docker image ke DockerHub
-      - name: Push the Docker image
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/jenkins-kaniko:${{ github.run_number }}
-  # update_manifest:
-  #   runs-on: ubuntu-latest
-  #   needs: build  # Tunggu job build selesai sebelum menjalankan job ini
-
-  #   steps:
-  #     # Checkout repository dan pindah ke branch `manifest_k8s`
-  #     - name: Check out manifest branch
-  #       uses: actions/checkout@v3
-  #       with:
-  #         ref: manifest_k8s
-
-  #     # Update tag image di file `deploy.yaml`
-  #     - name: Update Kubernetes manifest with new image tag
-  #       run: |
-  #         IMAGE_TAG=${{ github.run_number }}
-          
-  #         # Update tag image di manifest deploy.yaml
-  #         sed -i "s|image: .*/jenkins-kaniko:.*|image: dnanfab/jenkins-kaniko:${IMAGE_TAG}|g" manifest_k8s/deploy.yaml
-      
-  #     - name: Check manifest file
-  #       run: cat manifest_k8s/deploy.yaml
-
-  #     # Commit dan push perubahan ke branch `manifest_k8s`
-  #     - name: Commit and push manifest changes
-  #       env:
-  #         PAT_SECRET: ${{ secrets.PAT_SECRET }}
-  #       run: |
-  #         git config --global user.name "github-actions[bot]"
-  #         git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-  #         git add manifest_k8s/deploy.yaml
-  #         git commit -m "Update image tag to build number $IMAGE_TAG"
-  #         git push https://${PAT_SECRET}@github.com/${{ github.repository }} manifest_k8s
-
-  notify:
-    runs-on: ubuntu-latest
-    needs: [build]  # Jalankan setelah build dan update manifest selesai
-    if: always()  # Pastikan step ini selalu dijalankan (berhasil/gagal)
-
-    steps:
-      - name: Check out the repository
-        uses: actions/checkout@v3
-
-      - name: Send Notification
+      - name: Send Notification (Pipeline Start)
         env:
           API_URL: ${{ secrets.API_URL }}
           API_SECRET: ${{ secrets.API_SECRET }}
@@ -110,12 +28,61 @@ jobs:
           AUTHOR=$(git log -1 --pretty=format:"%ae")
           COMMIT_HASH=$(git log -1 --pretty=format:"%H")
           JOB_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          STATUS=${{ job.status }}
 
-          # Membangun payload menggunakan printf
-          TEXT=$(printf "Pipeline Result: %s\nBranch(Version): %s\nLast Message: %s\nAuthor: %s\nCommit: %s\nJob URL: %s" "$STATUS" "$BRANCH" "$LAST_COMMIT" "$AUTHOR" "$COMMIT_HASH" "$JOB_URL")
+          # Membangun pesan dengan emoji
+          TEXT=$(printf "🚀 *Pipeline Started!*\n🔖 *Branch:* %s\n📝 *Commit:* %s\n👤 *Author:* %s\n🔗 [View Job](%s)" "$BRANCH" "$LAST_COMMIT" "$AUTHOR" "$JOB_URL")
 
-          # Panggil API menggunakan curl dengan multipart/form-data
+          curl -X POST $API_URL \
+            -H "x-api-secret: $API_SECRET" \
+            -H "x-api-key: $API_KEY" \
+            -F "text=$TEXT" \
+            -F "number=$NUMBER_NOTIFICATION"
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build the Docker image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/jenkins-kaniko:${{ github.run_number }} .
+
+      - name: Push the Docker image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/jenkins-kaniko:${{ github.run_number }}
+
+  notify:
+    runs-on: ubuntu-latest
+    needs: build
+    if: always()  # Pastikan notifikasi selalu dikirim
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v3
+
+      - name: Send Notification (Pipeline Result)
+        env:
+          API_URL: ${{ secrets.API_URL }}
+          API_SECRET: ${{ secrets.API_SECRET }}
+          API_KEY: HELLOWORLD
+          NUMBER_NOTIFICATION: ${{ secrets.NUMBER_NOTIFICATION }}
+        run: |
+          BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          LAST_COMMIT=$(git log -1 --pretty=format:"%s")
+          AUTHOR=$(git log -1 --pretty=format:"%ae")
+          COMMIT_HASH=$(git log -1 --pretty=format:"%H")
+          JOB_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          STATUS="${{ job.status }}"
+
+          if [ "$STATUS" == "success" ]; then
+            ICON="✅"
+            MESSAGE="*Pipeline Succeeded!*"
+          else
+            ICON="❌"
+            MESSAGE="*Pipeline Failed!*"
+          fi
+
+          TEXT=$(printf "%s %s\n🔖 *Branch:* %s\n📝 *Commit:* %s\n👤 *Author:* %s\n🔗 [View Job](%s)" "$ICON" "$MESSAGE" "$BRANCH" "$LAST_COMMIT" "$AUTHOR" "$JOB_URL")
+
           curl -X POST $API_URL \
             -H "x-api-secret: $API_SECRET" \
             -H "x-api-key: $API_KEY" \
